@@ -89,6 +89,8 @@ samples <- samples %>%
     pc_detected_sa_neutal_u200 = data$mpox_cases$sa_observed / cases_sa_neutral_u200 * 100,
     pc_detected_sa_pessimistic_u100 = data$mpox_cases$sa_observed / cases_sa_pessimistic_u100 * 100,
     pc_detected_sa_pessimistic_u200 = data$mpox_cases$sa_observed / cases_sa_pessimistic_u200 * 100,
+    pc_detected_sa_ahiv_u100 = data$mpox_cases$sa_observed_ahiv / cases_sa_ahiv_u100 * 100,
+    pc_detected_sa_ahiv_u200 = data$mpox_cases$sa_observed_ahiv / cases_sa_ahiv_u200 * 100,
   )
 
 # Summarize results
