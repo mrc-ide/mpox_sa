@@ -105,3 +105,57 @@ summary <- samples %>%
 
 print(summary, n = Inf)
 
+# Implied ascertainment
+
+calc_implied_prop_ahiv1 <- function(ascertainment, observed_cases,
+                                   estimated_cases_ahiv, prob_hiv_given_mpox) {
+  estimated_cases <- observed_cases / ascertainment
+  estimated_cases_hiv <- estimated_cases * prob_hiv_given_mpox
+  prop_ahiv <- estimated_cases_ahiv / estimated_cases_hiv
+
+  c(mean = mean(prop_ahiv),
+    q2.5 = unname(quantile(prop_ahiv, 0.025)),
+    q97.5 = unname(quantile(prop_ahiv, 0.975)))
+}
+
+calc_implied_prop_ahiv <- function(ascertainment, observed_cases,
+                                   estimated_cases_ahiv, prob_hiv_given_mpox) {
+  ret <- sapply(ascertainment, calc_implied_prop_ahiv1,
+         observed_cases = observed_cases,
+         estimated_cases_ahiv = estimated_cases_ahiv,
+         prob_hiv_given_mpox = prob_hiv_given_mpox)
+  data.frame(ascertainment = ascertainment,
+             t(ret))
+}
+
+
+xout <- seq(0, 1, 0.01)
+
+df <- list(
+  "Central" = calc_implied_prop_ahiv(xout,
+                                         observed_cases = data$mpox_cases$sa_observed,
+                                         estimated_cases_ahiv = samples$cases_sa_ahiv_u200,
+                                         prob_hiv_given_mpox = samples$p_hiv_mpox_sa),
+  "P(HIV|mpox)=P(HIV)" = calc_implied_prop_ahiv(xout,
+                                    observed_cases = data$mpox_cases$sa_observed,
+                                    estimated_cases_ahiv = samples$cases_sa_ahiv_u200,
+                                    prob_hiv_given_mpox = samples$p_hiv_sa),
+  "P(HIV|mpox)=1" = calc_implied_prop_ahiv(xout,
+                                   observed_cases = data$mpox_cases$sa_observed,
+                                   estimated_cases_ahiv = samples$cases_sa_ahiv_u200,
+                                   prob_hiv_given_mpox = 1)
+) %>% 
+  dplyr::bind_rows(.id = "scenario")
+df %>% 
+  ggplot(aes(x = ascertainment, fill = scenario, colour = scenario, group = scenario)) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5), alpha = 0.2, colour = NA) +
+  geom_line(aes(y = mean)) +
+  geom_hline(yintercept = 0.066, lty = 2) +
+  geom_hline(yintercept = 0.13, lty = 3) +
+  coord_cartesian(ylim = c(0, 1)) +
+  labs(y = "Proportion of mpox cases\nLWHIV who are LWAHIV") +
+  theme_bw() 
+
+
+df %>% 
+  dplyr::filter(ascertainment == 0.1)
